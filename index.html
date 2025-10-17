@@ -76,12 +76,15 @@
     cursor: pointer;
   }
 
+  /* Mobile keyboard fix */
   #inputField {
     position: absolute;
-    opacity: 0;
-    height: 1px;
+    top: 0;
+    left: 0;
     width: 1px;
-    pointer-events: none;
+    height: 1px;
+    opacity: 0.01;
+    z-index: -1;
   }
 </style>
 </head>
@@ -97,7 +100,7 @@
 </div>
 <div id="tapStart">Tap to Start Typing</div>
 <button id="restartBtn">Restart Game</button>
-<input type="text" id="inputField" autofocus />
+<input type="text" id="inputField" />
 
 <script>
 const canvas = document.getElementById("gameCanvas");
@@ -105,6 +108,7 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Word list
 const words = [
 "code","fast","type","game","sky","birds","speed","focus","react","skill",
 "energy","sharp","blast","power","light","wind","fly","storm","cloud","fire",
@@ -268,22 +272,33 @@ document.getElementById("restartBtn").addEventListener("click", () => {
 });
 
 const input = document.getElementById("inputField");
-input.focus();
 input.addEventListener("input", e => {
   const letter = e.target.value;
   if (letter) handleLetter(letter);
   e.target.value = "";
 });
 
-// Tap to start game
+// Tap to start with mobile keyboard fix
 const tapStart = document.getElementById("tapStart");
 tapStart.addEventListener("click", () => {
+  // Make input temporarily visible to allow keyboard on mobile
+  input.style.width = "100px";
+  input.style.height = "30px";
+  input.style.opacity = "0.5";
+  input.style.zIndex = "1000";
   input.focus();
+
+  setTimeout(() => {
+    input.style.width = "1px";
+    input.style.height = "1px";
+    input.style.opacity = "0.01";
+    input.style.zIndex = "-1";
+  }, 500);
+
   tapStart.style.display = "none";
   startGame();
 });
 
-// Start the game loop and spawn words
 function startGame() {
   setInterval(() => {
     if (!gameOver) spawnWord();
@@ -300,10 +315,12 @@ function animate() {
   if (!gameOver) requestAnimationFrame(animate);
 }
 
-// Keep input focused even after clicking outside
-document.body.addEventListener("click", () => input.focus());
+// Keep input focused after any click
+document.body.addEventListener("click", () => {
+  input.focus();
+});
 
-// Resize canvas on window change
+// Resize canvas
 window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
