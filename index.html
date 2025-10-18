@@ -68,7 +68,6 @@
     cursor: pointer;
   }
 
-  /* Mobile keyboard fix */
   #inputField {
     position: absolute;
     top: 0;
@@ -100,12 +99,28 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Words
+// 📚 200+ words
 const words = [
 "code","fast","type","game","sky","birds","speed","focus","react","skill",
 "storm","cloud","fire","water","earth","stone","leaf","tree","sun","moon",
 "jump","run","play","fun","joy","win","lose","hope","dream","wish","plan",
-"build","create","grow","travel","explore","find","seek","catch","throw","kick"
+"build","create","grow","travel","explore","find","seek","catch","throw","kick",
+"quick","brown","fox","jumps","lazy","dog","light","dark","rain","shine",
+"wind","snow","hail","stormy","wave","ocean","river","mountain","valley","peak",
+"happy","sad","angry","calm","brave","smart","strong","weak","gentle","wild",
+"hello","world","friend","enemy","love","hate","truth","lie","clear","fog",
+"apple","banana","orange","grape","lemon","lime","melon","berry","mango","peach",
+"table","chair","floor","door","window","roof","wall","clock","lamp","pen",
+"write","read","think","learn","teach","study","test","pass","fail","goal",
+"north","south","east","west","above","below","left","right","up","down",
+"bird","cat","dog","fish","horse","sheep","duck","lion","tiger","zebra",
+"blue","red","green","white","black","yellow","pink","brown","gray","gold",
+"car","bike","train","plane","boat","ship","truck","bus","road","track",
+"star","space","galaxy","planet","earth","mars","venus","saturn","moon","sun",
+"king","queen","prince","knight","castle","crown","sword","shield","magic","quest",
+"rock","paper","scissors","glove","hat","shoe","bag","ring","watch","dress",
+"music","song","dance","beat","drum","piano","guitar","violin","voice","band",
+"light","bright","flash","shine","glow","spark","flare","beam","blink","glint"
 ];
 
 let activeWords = [];
@@ -115,17 +130,18 @@ let level = 1;
 let fallSpeed = 1.5;
 let nextLevelScore = 30;
 let lives = 3;
-let gameOver = false;
+let isGameOver = false;
 let spawnInterval = null;
+let animationId = null;
 
-// Sounds
+// 🔊 Sounds
 const popSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
 const levelUpSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
 const lifeLostSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang.ogg");
 const destroySound = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 const gameOverSound = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_07d012c391.mp3?filename=horror-ambience-6036.mp3");
 
-// Birds
+// 🕊 Birds
 for (let i = 0; i < 8; i++) {
   birds.push({ x: Math.random() * canvas.width, y: Math.random() * (canvas.height / 2), speed: 1 + Math.random() * 1.5 });
 }
@@ -153,12 +169,12 @@ function updateBirds() {
   });
 }
 
+// 🪂 Words
 function spawnWord() {
-  if (!gameOver) {
-    const text = words[Math.floor(Math.random() * words.length)];
-    const x = Math.random() * (canvas.width - 150);
-    activeWords.push({ text, x, y: 0 });
-  }
+  if (isGameOver) return;
+  const text = words[Math.floor(Math.random() * words.length)];
+  const x = Math.random() * (canvas.width - 150);
+  activeWords.push({ text, x, y: 0 });
 }
 
 function drawWords() {
@@ -178,11 +194,12 @@ function updateWords() {
   }
 }
 
-// ✅ Letter-by-letter typing (in order)
+// 🔤 Typing logic
 function handleLetter(letter) {
+  letter = letter.toLowerCase();
   for (let i = 0; i < activeWords.length; i++) {
-    let word = activeWords[i];
-    if (word.text[0] === letter.toLowerCase()) {
+    const word = activeWords[i];
+    if (word.text[0] === letter) {
       word.text = word.text.slice(1);
       popSound.currentTime = 0;
       popSound.play();
@@ -222,7 +239,7 @@ function loseLife() {
 }
 
 function endGame() {
-  gameOver = true;
+  isGameOver = true;
   document.getElementById("gameOver").style.opacity = "1";
   document.getElementById("restartBtn").style.display = "block";
   gameOverSound.currentTime = 0;
@@ -231,8 +248,10 @@ function endGame() {
     clearInterval(spawnInterval);
     spawnInterval = null;
   }
+  cancelAnimationFrame(animationId);
 }
 
+// 🔁 Restart
 document.getElementById("restartBtn").addEventListener("click", () => {
   score = 0;
   level = 1;
@@ -240,17 +259,19 @@ document.getElementById("restartBtn").addEventListener("click", () => {
   nextLevelScore = 30;
   lives = 3;
   activeWords = [];
-  gameOver = false;
-  document.getElementById("score").textContent = "Score: " + score;
-  document.getElementById("level").textContent = "Level: " + level;
-  document.getElementById("lives").textContent = "Lives: " + lives;
+  isGameOver = false;
+  document.getElementById("score").textContent = "Score: 0";
+  document.getElementById("level").textContent = "Level: 1";
+  document.getElementById("lives").textContent = "Lives: 3";
   document.getElementById("gameOver").style.opacity = "0";
   document.getElementById("restartBtn").style.display = "none";
   document.getElementById("tapStart").style.display = "block";
   if (spawnInterval) clearInterval(spawnInterval);
   spawnInterval = null;
+  cancelAnimationFrame(animationId);
 });
 
+// 🧑‍💻 Input
 const input = document.getElementById("inputField");
 input.addEventListener("input", e => {
   const letter = e.target.value;
@@ -258,7 +279,7 @@ input.addEventListener("input", e => {
   e.target.value = "";
 });
 
-// ✅ Tap to start (mobile keyboard fix)
+// 📱 Tap to start
 const tapStart = document.getElementById("tapStart");
 tapStart.addEventListener("click", () => {
   input.style.width = "100px";
@@ -280,7 +301,7 @@ tapStart.addEventListener("click", () => {
 
 function startGame() {
   if (spawnInterval) clearInterval(spawnInterval);
-  spawnInterval = setInterval(() => { if (!gameOver) spawnWord(); }, 2000);
+  spawnInterval = setInterval(() => { if (!isGameOver) spawnWord(); }, 2000);
   animate();
 }
 
@@ -290,7 +311,7 @@ function animate() {
   drawBirds();
   updateWords();
   drawWords();
-  if (!gameOver) requestAnimationFrame(animate);
+  if (!isGameOver) animationId = requestAnimationFrame(animate);
 }
 
 document.body.addEventListener("click", () => input.focus());
@@ -300,4 +321,4 @@ window.addEventListener("resize", () => {
 });
 </script>
 </body>
-  </html>
+</html>
