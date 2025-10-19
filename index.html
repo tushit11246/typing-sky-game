@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Typing Sky Game</title>
+<title>Typing Sky Game - Fast Mode</title>
 <style>
   body {
     margin: 0;
@@ -99,7 +99,7 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// 📚 200+ words
+// 📚 Words
 const words = [
 "code","fast","type","game","sky","birds","speed","focus","react","skill",
 "storm","cloud","fire","water","earth","stone","leaf","tree","sun","moon",
@@ -133,6 +133,7 @@ let lives = 3;
 let isGameOver = false;
 let spawnInterval = null;
 let animationId = null;
+let spawnTime = 2000;  // initial spawn time
 
 // 🔊 Sounds
 const popSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
@@ -175,6 +176,13 @@ function spawnWord() {
   const text = words[Math.floor(Math.random() * words.length)];
   const x = Math.random() * (canvas.width - 150);
   activeWords.push({ text, x, y: 0 });
+
+  // ⏩ Gradually decrease spawn time
+  if (spawnTime > 800) {
+    spawnTime -= 50;
+    clearInterval(spawnInterval);
+    spawnInterval = setInterval(spawnWord, spawnTime);
+  }
 }
 
 function drawWords() {
@@ -221,6 +229,14 @@ function checkLevelUp() {
     level++;
     fallSpeed += 1.5;
     nextLevelScore += 40;
+
+    // 💨 Speed boost on level up
+    if (spawnInterval) {
+      clearInterval(spawnInterval);
+      spawnTime = Math.max(800, spawnTime - 200);
+      spawnInterval = setInterval(spawnWord, spawnTime);
+    }
+
     document.getElementById("level").textContent = "Level: " + level;
     levelUpSound.currentTime = 0;
     levelUpSound.play();
@@ -260,6 +276,7 @@ document.getElementById("restartBtn").addEventListener("click", () => {
   lives = 3;
   activeWords = [];
   isGameOver = false;
+  spawnTime = 2000;
   document.getElementById("score").textContent = "Score: 0";
   document.getElementById("level").textContent = "Level: 1";
   document.getElementById("lives").textContent = "Lives: 3";
@@ -301,7 +318,7 @@ tapStart.addEventListener("click", () => {
 
 function startGame() {
   if (spawnInterval) clearInterval(spawnInterval);
-  spawnInterval = setInterval(() => { if (!isGameOver) spawnWord(); }, 2000);
+  spawnInterval = setInterval(spawnWord, spawnTime);
   animate();
 }
 
@@ -311,6 +328,10 @@ function animate() {
   drawBirds();
   updateWords();
   drawWords();
+
+  // 🚀 Increase fall speed gradually over time
+  fallSpeed += 0.0005;
+
   if (!isGameOver) animationId = requestAnimationFrame(animate);
 }
 
@@ -321,4 +342,4 @@ window.addEventListener("resize", () => {
 });
 </script>
 </body>
-</html>
+  </html>
